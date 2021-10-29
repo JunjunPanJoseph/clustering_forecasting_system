@@ -29,6 +29,23 @@ def save_data(table_name, building_id, df):
     for index, line in df.iterrows():
         cur.execute("INSERT INTO {} (BUILDING_ID, TIMESTAMP, VALUE) VALUES ({}, '{}', '{}')".format(table_name, building_id, line["Time stamp"][:19], line["Value"]))
     cur.close()
+def store_clusters(name, clusters, building_id, raw):
+    cur = conn.cursor()
+    # store cluster method
+    cur.execute("INSERT INTO CLUSTER_METHOD (BUILDING_ID, NAME) VALUES ({}, '{}') RETURNING ID".format(building_id, name))
+    conn.commit()
+    cluster_method_pk = cur.fetchone()[0]
+    # store cluster information
+    for cluster in clusters:
+        cur.execute("INSERT INTO CLUSTER_MEMBER (CLUSTER_METHOD_ID, NAME, STATISTIC) VALUES (%s, %s, %s) RETURNING ID", (cluster_method_pk, cluster["name"], str(cluster["summary"])))
+        conn.commit()
+        cluster_pk = cur.fetchone()[0]
+        for i in range(len(cluster["statistic"]["min"])):
+            cur.execute("INSERT INTO CLUSTER_STREAM (CLUSTER_ID, TIME, MIN, MAX, Q1, Q2, Q3, UPPER, LOWER) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",  (
+                cluster_pk, raw["timestamp"][0][i], cluster["statistic"]["min"][i], cluster["statistic"]["max"][i],
+                cluster["statistic"]["q1"][i], cluster["statistic"]["q2"][i], cluster["statistic"]["q3"][i],
+                cluster["statistic"]["upper"][i], cluster["statistic"]["lower"][i]))
+    cur.close()
 
 def save_result(result):
     pass

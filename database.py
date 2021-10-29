@@ -46,13 +46,22 @@ def init_table():
             VALUE DECIMAL(12, 4),
             FOREIGN KEY (BUILDING_ID) REFERENCES BUILDING(ID)
         );
-        DROP TABLE IF EXISTS CLUSTER_MEMBER CASCADE;
-        CREATE TABLE CLUSTER_MEMBER (
+        DROP TABLE IF EXISTS CLUSTER_METHOD CASCADE;
+        CREATE TABLE CLUSTER_METHOD (
             ID  SERIAL PRIMARY KEY,
             BUILDING_ID INT NOT NULL,
             NAME VARCHAR(100) NOT NULL,
+            FOREIGN KEY (BUILDING_ID) REFERENCES BUILDING(ID),
+            UNIQUE (BUILDING_ID, NAME)
+        );
+        DROP TABLE IF EXISTS CLUSTER_MEMBER CASCADE;
+        CREATE TABLE CLUSTER_MEMBER (
+            ID  SERIAL PRIMARY KEY,
+            CLUSTER_METHOD_ID INT NOT NULL,
+            NAME VARCHAR(100) NOT NULL,
             STATISTIC TEXT NOT NULL,
-            FOREIGN KEY (BUILDING_ID) REFERENCES BUILDING(ID)
+            FOREIGN KEY (CLUSTER_METHOD_ID) REFERENCES CLUSTER_METHOD(ID),
+            UNIQUE (CLUSTER_METHOD_ID, NAME)
         );
         DROP TABLE IF EXISTS CLUSTER_STREAM CASCADE;
         CREATE TABLE CLUSTER_STREAM (
@@ -66,7 +75,8 @@ def init_table():
             Q3 DECIMAL(12, 4),
             UPPER DECIMAL(12, 4),
             LOWER DECIMAL(12, 4),
-            FOREIGN KEY (CLUSTER_ID) REFERENCES CLUSTER_MEMBER(ID)
+            FOREIGN KEY (CLUSTER_ID) REFERENCES CLUSTER_MEMBER(ID),
+            UNIQUE (CLUSTER_ID, TIME)
         );
         
         DROP TABLE IF EXISTS PREDICT CASCADE;
@@ -80,6 +90,9 @@ def init_table():
 ''')
     conn.commit()
     cur.close()
+
+
+
 if __name__ == '__main__':
     init_table()
     df = pd.read_csv("../clustering/library.csv")
