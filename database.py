@@ -85,7 +85,8 @@ def init_table():
             BUILDING_ID INT NOT NULL,
             TIMESTAMP TIMESTAMP NOT NULL,
             VALUE DECIMAL(12, 4),
-            FOREIGN KEY (BUILDING_ID) REFERENCES BUILDING(ID)
+            FOREIGN KEY (BUILDING_ID) REFERENCES BUILDING(ID),
+            UNIQUE (BUILDING_ID, TIMESTAMP)
         );
 ''')
     conn.commit()

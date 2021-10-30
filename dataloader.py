@@ -1,3 +1,5 @@
+import datetime
+
 from database import conn, config
 import pandas as pd
 def load_data(table_name, name, time_start=None, time_end=None):
@@ -47,7 +49,29 @@ def store_clusters(name, clusters, building_id, raw):
                 cluster["statistic"]["upper"][i], cluster["statistic"]["lower"][i]))
     cur.close()
 
-def save_result(result):
-    pass
+def save_forcast_result(building_name, label, date):
+    cur = conn.cursor()
+    # get cluster information
+    cur.execute("select * from BUILDING where NAME='{}'".format(building_name))
+    result = cur.fetchone()
+    building_id = result[0]
+    cur.execute('''
+        SELECT CLUSTER_STREAM.TIME, CLUSTER_STREAM.Q2 
+        FROM CLUSTER_STREAM, CLUSTER_MEMBER, CLUSTER_METHOD
+        WHERE 
+             CLUSTER_METHOD.BUILDING_ID = %s
+        AND CLUSTER_METHOD.NAME = 'AgglomerativeClustering'
+        AND CLUSTER_METHOD.ID = CLUSTER_MEMBER.CLUSTER_METHOD_ID
+        AND CLUSTER_MEMBER.NAME = %s
+        AND CLUSTER_MEMBER.ID = CLUSTER_STREAM.CLUSTER_ID
+    ORDER BY CLUSTER_STREAM.TIME
+    ''', (building_id, str(label)))
+    result = cur.fetchall()
+    for res in result:
+        time = datetime.datetime.combine(date, res[0])
+        cur.execute("INSERT INTO PREDICT (BUILDING_ID, TIMESTAMP, VALUE) VALUES (%s, %s, %s)", (building_id, time, res[1]))
+        conn.commit()
+    cur.close()
+
 if __name__ == '__main__':
     id, df = load_data("STREAM", "library",time_start="2020-08-22 00:59:57", time_end="2020-08-22 04:59:57")

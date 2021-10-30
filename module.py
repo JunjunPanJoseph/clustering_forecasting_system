@@ -154,6 +154,7 @@ def get_statistic(dataset, timestamp, time, label, n_clusters):
         "weekday_summary": weekday_summary,
         "raw": {
             "data": dataset,
+            "label": label,
             "timestamp": timestamp,
             "time": time
         }
@@ -184,4 +185,50 @@ def clustering(df, model_name, n_clusters):
     result = get_statistic(dataset, timestamp, time, label, n_clusters)
     result["model_name"] = model_name
     result["model"] = model
+    # classification model
     return result
+holidays = [
+    datetime.datetime(2020, 1, 27),
+    datetime.datetime(2020, 3, 9),
+    datetime.datetime(2020, 4, 10),
+    datetime.datetime(2020, 4, 11),
+    datetime.datetime(2020, 4, 12),
+    datetime.datetime(2020, 4, 13),
+    datetime.datetime(2020, 4, 25),
+    datetime.datetime(2020, 6, 8),
+    datetime.datetime(2020, 10, 23),
+    datetime.datetime(2020, 11, 3),
+    datetime.datetime(2020, 12, 25),
+    datetime.datetime(2020, 12, 26),
+    datetime.datetime(2020, 12, 28),
+    datetime.datetime(2021, 1, 1),
+    datetime.datetime(2021, 1, 26),
+    datetime.datetime(2021, 3, 28),
+    datetime.datetime(2021, 4, 2),
+    datetime.datetime(2021, 4, 3),
+    datetime.datetime(2021, 4, 4),
+    datetime.datetime(2021, 4, 5),
+    datetime.datetime(2021, 4, 25),
+    datetime.datetime(2021, 6, 14),
+    datetime.datetime(2021, 9, 24),
+    datetime.datetime(2021, 2, 11),
+    datetime.datetime(2021, 12, 25),
+    datetime.datetime(2021, 12, 26),
+    datetime.datetime(2021, 12, 28),
+]
+
+def isholiday(time):
+    for t in holidays:
+        if t.year == time.year and t.month == time.month and t.day == time.day:
+            return True
+    return False
+def get_supervised_training_set(time):
+    features = []
+    for i in range(len(time)):
+        weekday = [0 for _ in range(7)]
+        weekday[time[i].weekday() - 1] = 1
+        month = [0 for _ in range(12)]
+        month[time[i].month - 1] = 1
+        feature = weekday + month + [isholiday(time[i])]
+        features.append(feature)
+    return features
